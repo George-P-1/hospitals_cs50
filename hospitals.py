@@ -15,6 +15,7 @@ import random
 import time
 import os
 import numpy as np
+import matplotlib.pyplot as plt
 
 # Save in new folder for each run
 timestamp = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
@@ -242,11 +243,17 @@ class Space():
     
 def plot_heatmap(heatmap):
     """Plot a heatmap using matplotlib."""
-    import matplotlib.pyplot as plt
-
-    plt.imshow(heatmap, cmap='hot', interpolation='nearest')
+    colormap = random.choice(["viridis", "plasma", "hot"]) # Choose random colormap
+    plt.imshow(heatmap, cmap=colormap, interpolation='nearest')
+    plt.title("Heatmap of Manhattan distances to houses")
+    plt.colorbar(label="Manhattan Distance", orientation="vertical")
+    # TODO - Show houses and hospital on the heatmap
+    plt.axis("off")
+    plt.tight_layout()
+    # TODO - Bonus part: Show the optimization process on the heatmap
     plt.savefig(f'{folder_name}/heatmap.png')
     plt.show()
+
 
 # Create a new space and add houses randomly
 s = Space(height=10, width=20, num_hospitals=1)
