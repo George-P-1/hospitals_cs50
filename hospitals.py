@@ -241,17 +241,22 @@ class Space():
 
         return heatmap
     
-def plot_heatmap(heatmap):
+def plot_heatmap(heatmap, show_locations=False):
     """Plot a heatmap using matplotlib."""
     colormap = random.choice(["viridis", "plasma", "hot"]) # Choose random colormap
     plt.imshow(heatmap, cmap=colormap, interpolation='nearest')
-    plt.title("Heatmap of Manhattan distances to houses")
+    plt.title("Heatmap of Manhattan distances to Houses\n[House=* and Hospital=+]")
     plt.colorbar(label="Manhattan Distance", orientation="vertical")
     # TODO - Show houses and hospital on the heatmap
-    plt.axis("off")
+    if show_locations:
+        for house in s.houses:
+            plt.text(house[1], house[0], '*', ha='center', va='center', fontsize=12, color='black')
+        plt.text(s.hospital[1], s.hospital[0], '+', ha='center', va='center', fontsize=12, color='black')
+    plt.xticks([])  # Hide x-axis ticks
+    plt.yticks([])  # Hide y-axis ticks
     plt.tight_layout()
     # TODO - Bonus part: Show the optimization process on the heatmap
-    plt.savefig(f'{folder_name}/heatmap.png')
+    plt.savefig(f'{folder_name}/heatmap_raw.png')
     plt.show()
 
 
@@ -263,9 +268,12 @@ for i in range(15):
 # Output the original state
 s.output_image(f"hospital_and_houses_map.png")
 
+# Choose a random hospital location
+s.add_hospital()
+
 # Generate heatmap
 heatmap = s.generate_heatmap()
-plot_heatmap(heatmap)
+plot_heatmap(heatmap, True)
 
 
 
