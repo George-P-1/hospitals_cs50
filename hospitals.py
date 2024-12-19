@@ -1,5 +1,5 @@
 """
-Project Description
+Project Instructions:
 -------------------
 
 The project aims to visualize the state-space landscape of cost function for the case of optimization of distance to houses at the presence of one hospital only.
@@ -225,10 +225,6 @@ class Space():
         img.save(filename)
 
     # New Methods for generating heatmap
-    def add_hospital(self): # REMOVE_LATER - It is just not needed at all since hill_climb is already generating random hospital location
-        """Add a hospital at a random location in state space."""
-        self.hospital = random.choice(list(self.available_spaces()))
-
     def calc_manhattan_distance(self, hospital, house):
         """Calculate the Manhattan distance between a hospital and a house."""
         return abs(house[0] - hospital[0]) + abs(house[1] - hospital[1])
@@ -260,15 +256,12 @@ def plot_heatmap(heatmap, colormap='hot', marker_color='blue', show_locations=Fa
         for house in s.houses:
             plt.text(house[1], house[0], '*', ha='center', va='center', fontsize=12, color=marker_color)
     plt.title("Heatmap of Manhattan distances to Houses\n[House=* and Optimal Hospital=x]")
-    # TODO - Bonus part: Show the optimization process on the heatmap
-    # plt.show() # REMOVE_LATER
 
     return plt.gcf()
 
 def plot_optimization_process(optimization_path, marker_color='blue'):
     """Plot the optimization process on the heatmap."""
-    # Plot line from initial hospital to next step in optimization process and so on all the way to to final hospital
-    # for now plot a + sign at every step of hospital movement
+    # Make into list as optimization_path is a list of set type
     x = [hospital_state[1] for hospital_state in optimization_path]
     y = [hospital_state[0] for hospital_state in optimization_path]
     plt.plot(x, y, '-', color=marker_color)
@@ -286,16 +279,12 @@ for i in range(15):
 # Output the map of houses only
 s.output_image(f"houses_map.png", True)
 
-# Choose a random hospital location
-# s.add_hospital() # REMOVE_LATER - because hill_climb is already generating random hospital location
-
 # Generate heatmap
 heatmap = s.generate_heatmap()
 
 # Plot heatmap
 # Choose random colormap
-plot_colors = random.choice([["viridis", "red"], ["plasma", "black"], ["hot", "green"]])
-# plot_colors = ["plasma", "black"] # REMOVE_LATER - uncomment above line
+plot_colors = random.choice([["viridis", "red"], ["plasma", "black"], ["hot", "blue"]])
 fig = plot_heatmap(heatmap, plot_colors[0], plot_colors[1], True)
 
 # Use local search to determine hospital placement
