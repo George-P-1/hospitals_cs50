@@ -31,6 +31,7 @@ class Space():
         self.num_hospitals = num_hospitals
         self.houses = set()
         self.hospitals = set()
+        self.optimization_path = [] # for storing the optimization path
 
     def add_house(self, row, col):
         """Add a house at a particular location in state space."""
@@ -62,6 +63,9 @@ class Space():
         self.hospitals = set()
         for i in range(self.num_hospitals):
             self.hospitals.add(random.choice(list(self.available_spaces())))
+        self.optimization_path.append(list(self.hospitals)[0]) # Append initial state to optimization path
+        # The [0] is used to get the first hospital location from the set of hospitals
+
         if log:
             print("Initial state: cost", self.get_cost(self.hospitals))
         if image_prefix:
@@ -94,13 +98,14 @@ class Space():
 
             # None of the neighbors are better than the current state
             if best_neighbor_cost >= self.get_cost(self.hospitals):
-                return self.hospitals
+                return self.hospitals, self.optimization_path
 
             # Move to a highest-valued neighbor
             else:
                 if log:
                     print(f"Found better neighbor: cost {best_neighbor_cost}")
                 self.hospitals = random.choice(best_neighbors)
+                self.optimization_path.append(list(self.hospitals)[0])  # Append best neighbour to optimization path
 
             # Generate image
             if image_prefix:
@@ -158,7 +163,7 @@ class Space():
 
         return neighbors
 
-    def output_image(self, filename):
+    def output_image(self, filename, initial=False):
         """Generates image with all houses and hospitals."""
         from PIL import Image, ImageDraw, ImageFont
         cell_size = 100
@@ -205,26 +210,25 @@ class Space():
         draw.rectangle(
             (0, self.height * cell_size, 
              self.width * cell_size, self.height * cell_size + cost_size + padding * 2),
-            fill="#144d16"
+            fill="#1f110b"
         )
-        # REMOVE_LATER - Commented out because this function is being called from outside the class and it does not have access to the class variables
-        # draw.text(
-        #     (padding, self.height * cell_size + padding),
-        #     f"Cost: {self.get_cost(self.hospitals)}",
-        #     fill="white",
-        #     font=font
-        # )
+        # Because this function is being called from outside the class and it does not have access to the class variables
+        if not initial:
+            draw.text(
+                (padding, self.height * cell_size + padding),
+                f"Cost: {self.get_cost(self.hospitals)}",
+                fill="white",
+                font=font
+            )
 
         filename = f'{folder_name}/{filename}'
         img.save(filename)
 
     # New Methods for generating heatmap
-
-    def add_hospital(self):
+    def add_hospital(self): # REMOVE_LATER - It is just not needed at all since hill_climb is already generating random hospital location
         """Add a hospital at a random location in state space."""
         self.hospital = random.choice(list(self.available_spaces()))
 
-    # REVIEW - This method and what it is gonna be used for later seems to be already included in the get_cost method. But using this method is useful when only one hospital is present in the state space. 
     def calc_manhattan_distance(self, hospital, house):
         """Calculate the Manhattan distance between a hospital and a house."""
         return abs(house[0] - hospital[0]) + abs(house[1] - hospital[1])
@@ -241,22 +245,36 @@ class Space():
 
         return heatmap
     
-def plot_heatmap(heatmap, show_locations=False):
+
+def plot_heatmap(heatmap, colormap='hot', marker_color='blue', show_locations=False):
     """Plot a heatmap using matplotlib."""
-    colormap = random.choice(["viridis", "plasma", "hot"]) # Choose random colormap
     plt.imshow(heatmap, cmap=colormap, interpolation='nearest')
-    plt.title("Heatmap of Manhattan distances to Houses\n[House=* and Hospital=+]")
+    plt.title("Heatmap of Manhattan distances to Houses")
     plt.colorbar(label="Manhattan Distance", orientation="vertical")
-    # TODO - Show houses and hospital on the heatmap
-    if show_locations:
-        for house in s.houses:
-            plt.text(house[1], house[0], '*', ha='center', va='center', fontsize=12, color='black')
-        plt.text(s.hospital[1], s.hospital[0], '+', ha='center', va='center', fontsize=12, color='black')
     plt.xticks([])  # Hide x-axis ticks
     plt.yticks([])  # Hide y-axis ticks
     plt.tight_layout()
-    # TODO - Bonus part: Show the optimization process on the heatmap
     plt.savefig(f'{folder_name}/heatmap_raw.png')
+    # Show houses and hospital on the heatmap
+    if show_locations:
+        for house in s.houses:
+            plt.text(house[1], house[0], '*', ha='center', va='center', fontsize=12, color=marker_color)
+    plt.title("Heatmap of Manhattan distances to Houses\n[House=* and Optimal Hospital=x]")
+    # TODO - Bonus part: Show the optimization process on the heatmap
+    # plt.show() # REMOVE_LATER
+
+    return plt.gcf()
+
+def plot_optimization_process(optimization_path, marker_color='blue'):
+    """Plot the optimization process on the heatmap."""
+    # Plot line from initial hospital to next step in optimization process and so on all the way to to final hospital
+    # for now plot a + sign at every step of hospital movement
+    x = [hospital_state[1] for hospital_state in optimization_path]
+    y = [hospital_state[0] for hospital_state in optimization_path]
+    plt.plot(x, y, '-', color=marker_color)
+    plt.plot(x[0], y[0], '>', color=marker_color, label='Initial Hospital')
+    plt.plot(x[-1], y[-1], 'x', color=marker_color, label='Final Hospital')
+    plt.savefig(f'{folder_name}/heatmap_optimization.png')
     plt.show()
 
 
@@ -265,20 +283,28 @@ s = Space(height=10, width=20, num_hospitals=1)
 for i in range(15):
     s.add_house(random.randrange(s.height), random.randrange(s.width))
 
-# Output the original state
-s.output_image(f"hospital_and_houses_map.png")
+# Output the map of houses only
+s.output_image(f"houses_map.png", True)
 
 # Choose a random hospital location
-s.add_hospital()
+# s.add_hospital() # REMOVE_LATER - because hill_climb is already generating random hospital location
 
 # Generate heatmap
 heatmap = s.generate_heatmap()
-plot_heatmap(heatmap, True)
 
-
+# Plot heatmap
+# Choose random colormap
+plot_colors = random.choice([["viridis", "red"], ["plasma", "black"], ["hot", "green"]])
+# plot_colors = ["plasma", "black"] # REMOVE_LATER - uncomment above line
+fig = plot_heatmap(heatmap, plot_colors[0], plot_colors[1], True)
 
 # Use local search to determine hospital placement
-# hospitals = s.hill_climb(image_prefix="hospitals", log=True)
+hospitals, op_path = s.hill_climb(image_prefix="hospitals", log=True)
 
-# The following line was written in class by teacher instead of hill_climb
+print(hospitals)
+print(op_path)
+
+plot_optimization_process(op_path, plot_colors[1])
+
+# Using random restart to find the global maxima in case of multiple local minima
 # hospitals = s.random_restart(20, image_prefix="hospitals", log=True)
